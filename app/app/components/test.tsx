@@ -8,7 +8,7 @@ import { Program, BN } from '@coral-xyz/anchor';
 import idl from '../../../target/idl/challenge_registry_program.json';
 import { PublicKey } from '@solana/web3.js';
 import { createInitializeMintInstruction, createAssociatedTokenAccountInstruction, createMintToInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID, MINT_SIZE } from "@solana/spl-token";
-
+const mintKeypair = anchor.web3.Keypair.generate();
 export default function TestPage() {
     const { connection } = useConnection();
     const wallet = useAnchorWallet();
@@ -27,7 +27,7 @@ export default function TestPage() {
     // Add new state variable for NFT keypairs
     const [challengeNFTs, setChallengeNFTs] = useState<{ [name: string]: PublicKey }>({});
    // Create a new keypair for the mint account
-   const mintKeypair = anchor.web3.Keypair.generate();
+
     // Update useEffect to handle wallet connection status
     useEffect(() => {
         if (wallet) {
