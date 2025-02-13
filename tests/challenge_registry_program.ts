@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { ChallengeRegistryProgram } from "../target/types/challenge_registry_program";
 import { assert } from "chai";
 const program = anchor.workspace.ChallengeRegistryProgram as Program<ChallengeRegistryProgram>;
@@ -32,6 +32,7 @@ it("Can create a challenge", async () => {
       )
     )
   );
+  const requireStake = 500000000;
   const testKeypair = anchor.web3.Keypair.generate();
   const entrySeeds = anchor.web3.Keypair.generate();
   const nativeTokenKeypair = anchor.web3.Keypair.generate();
@@ -47,9 +48,9 @@ it("Can create a challenge", async () => {
       "Test Challenge",
       "https://test-studio.com/metadata.json",
       nftCollectionKeypair.publicKey,
+      new BN(requireStake)
     )
     .accounts({
-      entrySeed: entrySeeds.publicKey,
       systemProgram: anchor.web3.SystemProgram.programId,
     })
     .signers([sender])
@@ -60,13 +61,16 @@ it("Can create a challenge", async () => {
   // Fetch the created entry account and verify its data
   const entryAccount = await program.account.challengeRegistryMetadata.fetch(
     anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("challenge"), entrySeeds.publicKey.toBuffer()],
+      [Buffer.from("challenge"), Buffer.from("Test Challenge")],
       program.programId
     )[0]
   );
+  console.log("entryAccount", entryAccount);
   let test = entryAccount.nft.toBase58();
   console.log("Created studio :", test);
   assert.equal(entryAccount.name, "Test Challenge");
   assert.equal(entryAccount.uri, "https://test-studio.com/metadata.json");
   assert.equal(test, nftCollectionKeypair.publicKey.toBase58());
+  assert.equal(entryAccount.requireStake.toString(), requireStake.toString());
+  assert.equal(entryAccount.totalStaked.toString(), "0");
 });

@@ -11,6 +11,7 @@ pub mod challenge_registry_program {
         name: String,
         uri: String,
         nft: Pubkey,
+        require_stake: u64,
     ) -> Result<()> {
         // Store the entry data
         let entry_account = &mut ctx.accounts.pda;
@@ -18,6 +19,8 @@ pub mod challenge_registry_program {
             name,
             uri,
             nft,
+            total_staked:0,
+            require_stake,
             bump: ctx.bumps.pda,
         };
         entry_account.set_inner(metadata);
@@ -48,6 +51,8 @@ pub struct ChallengeRegistryMetadata {
     pub name: String,
     pub uri: String,
     pub nft: Pubkey,
+    pub total_staked: u64,  // Total staked amount
+    pub require_stake: u64, // Require stake amount
     pub bump: u8,
 }
 
@@ -60,7 +65,6 @@ pub struct ChallengeRegistryMetadata {
 pub struct Challenge<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-
     #[account(
         init,
         payer = payer,
@@ -68,13 +72,12 @@ pub struct Challenge<'info> {
             + 4 + 32  // name (String - 4 bytes for length + max 32 bytes for content)
             + 4 + 200 // uri (String - 4 bytes for length + max 200 bytes for content)
             + 32   // nft (single Pubkey)
+            + 8    // total_staked (u64)
+            + 8    // require_stake (u64)
             + 1,      // bump (u8)
-        seeds = [b"challenge", entry_seed.key().as_ref()],
+        seeds = [b"challenge", name.as_bytes()],
         bump
     )]
     pub pda: Account<'info, ChallengeRegistryMetadata>,
-
-    /// CHECK: This is safe as we're just using it as a reference for PDA seeds
-    pub entry_seed: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
