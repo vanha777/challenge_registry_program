@@ -1,18 +1,18 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { ChallengeRegistryProgram } from "../target/types/challenge_registry_program";
-
-const program = anchor.workspace.MetalootRegistryProgram as Program<MetalootRegistryProgram>;
+import { assert } from "chai";
+const program = anchor.workspace.ChallengeRegistryProgram as Program<ChallengeRegistryProgram>;
 
 // ===============================
-// 🎮 Game Studio Registry Tests
+// 🎮 Challenge Registry Tests
 // ===============================
 //
-// Test Suite 1: Studio Creation
+// Test Suite 1: Challenge Creation
 // ----------------------------
-// We're testing the fundamental ability to create a new game studio entry
-// in the MetaLoot registry. This is the cornerstone test that validates
-// the core registration process for game studios joining the ecosystem.
+// We're testing the fundamental ability to create a new challenge entry
+// in the Challenge Registry. This is the cornerstone test that validates
+// the core registration process for challenges joining the ecosystem.
 //
 // Critical aspects being validated:
 // - PDA creation and storage
@@ -20,7 +20,7 @@ const program = anchor.workspace.MetalootRegistryProgram as Program<MetalootRegi
 // - Account structure integrity
 // ===============================
 
-it("Can create a studio with Tokens and NFT collection", async () => {
+it("Can create a challenge", async () => {
   // Generate keypairs for required accounts
   const sender = anchor.web3.Keypair.fromSecretKey(
     Uint8Array.from(
@@ -43,13 +43,10 @@ it("Can create a studio with Tokens and NFT collection", async () => {
   )[0];
   // Create the studio with full metadata
   const tx = await program.methods
-    .createGameStudio(
-      "Test Studio",
-      "TEST",
+    .createChallenge(
+      "Test Challenge",
       "https://test-studio.com/metadata.json",
-      sender.publicKey,
-      nativeTokenKeypair.publicKey,
-      [nftCollectionKeypair.publicKey]
+      nftCollectionKeypair.publicKey,
     )
     .accounts({
       entrySeed: entrySeeds.publicKey,
@@ -61,22 +58,15 @@ it("Can create a studio with Tokens and NFT collection", async () => {
   console.log("Create studio transaction signature:", tx);
 
   // Fetch the created entry account and verify its data
-  const entryAccount = await program.account.gameRegistryMetadata.fetch(
+  const entryAccount = await program.account.challengeRegistryMetadata.fetch(
     anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("registry"), entrySeeds.publicKey.toBuffer()],
+      [Buffer.from("challenge"), entrySeeds.publicKey.toBuffer()],
       program.programId
     )[0]
   );
-  let test = entryAccount.nftCollection.map(key => key.toBase58());
+  let test = entryAccount.nft.toBase58();
   console.log("Created studio :", test);
-  assert.equal(entryAccount.name, "Test Studio");
-  assert.equal(entryAccount.symbol, "TEST");
+  assert.equal(entryAccount.name, "Test Challenge");
   assert.equal(entryAccount.uri, "https://test-studio.com/metadata.json");
-  assert.equal(entryAccount.authority.toBase58(), program.provider.publicKey.toBase58());
-  assert.equal(entryAccount.nativeToken.toBase58(), nativeTokenKeypair.publicKey.toBase58());
-  // Fix: Compare arrays of Base58 strings
-  assert.deepEqual(
-    entryAccount.nftCollection.map(key => key.toBase58()),
-    [nftCollectionKeypair.publicKey.toBase58()]
-  );
+  assert.equal(test, nftCollectionKeypair.publicKey.toBase58());
 });
